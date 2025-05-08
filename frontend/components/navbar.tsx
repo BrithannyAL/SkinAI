@@ -6,7 +6,7 @@ export function Navbar() {
       <div className="container flex h-16 items-center">
         <div className="flex items-center gap-2">
           <Image src="/images/logo.png" alt="AI Consultation Logo" width={40} height={40} className="object-contain" />
-          <span className="text-xl font-bold text-white">AI Consultation</span>
+          <span className="text-xl font-bold text-white">SkinAI</span>
         </div>
       </div>
     </header>

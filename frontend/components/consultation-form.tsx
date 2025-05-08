@@ -111,40 +111,10 @@ export function ConsultationForm() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="text" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="text">Texto</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="media">Multimedia</TabsTrigger>
                   <TabsTrigger value="audio">Audio</TabsTrigger>
                 </TabsList>
-                <TabsContent value="text" className="mt-4">
-                  <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4">
-                      <Textarea
-                        placeholder="Escribe tu consulta aquí..."
-                        className="min-h-[120px] bg-dark border-turquoise/20 focus-visible:ring-turquoise"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                      />
-                      <Button
-                        type="submit"
-                        className="w-full bg-turquoise hover:bg-turquoise/90"
-                        disabled={isLoading || !message.trim()}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Procesando...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="mr-2 h-4 w-4" />
-                            Enviar consulta
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </TabsContent>
                 <TabsContent value="media" className="mt-4">
                   <form onSubmit={handleSubmit}>
                     <div className="grid gap-4">

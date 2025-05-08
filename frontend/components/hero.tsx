@@ -13,11 +13,10 @@ export function Hero() {
               <span className="text-secondary">Tecnología de IA avanzada</span>
             </div>
             <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-              Consulta con Inteligencia Artificial <span className="text-turquoise">Avanzada</span>
+            Bienvenido a <br /> <span className="text-turquoise">SkinAI</span>
             </h1>
             <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Sube archivos multimedia, realiza consultas complejas y obtén transcripciones de audio en tiempo real con
-              nuestra plataforma de IA de última generación.
+            Inteligencia artificial que identifica manchas y marcas en la piel a partir de contenido multimedia como fotos y videos. También transcribe audios en tiempo real con alta precisión. ¡Todo en una sola aplicación!
             </p>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Link href="#consultation">
