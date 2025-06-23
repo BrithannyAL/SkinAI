@@ -360,7 +360,7 @@ export function ConsultationForm() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {result.file_type === "image" && result.analysis.predicted_class && (
+                    {(result.file_type === "image" || result.file_type === "video") && result.analysis.predicted_class && (
                       <div className="space-y-4">
                         <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
                           <h4 className="font-semibold text-green-400 mb-2">Diagnóstico Principal</h4>
