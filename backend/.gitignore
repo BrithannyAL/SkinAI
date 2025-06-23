@@ -1,0 +1,23 @@
+
+# Entorno virtual
+venv/
+
+# Archivos de modelo
+models/*.keras
+models/*.h5
+models/*.pt
+models/*.pkl
+
+# Archivos temporales
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.tmp
+
+# Archivos de video, audio o imagen temporales
+*.mp4
+*.mp3
+*.wav
+*.jpg
+*.png

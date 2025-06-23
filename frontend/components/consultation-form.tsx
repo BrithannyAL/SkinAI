@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,8 +8,26 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Mic, Upload, ImageIcon, Video, Send, Loader2, X } from "lucide-react"
+import { Mic, Upload, ImageIcon, Video, Send, Loader2, X, CheckCircle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+interface AnalysisResult {
+  success: boolean
+  file_type: string
+  filename: string
+  message: string
+  analysis: {
+    predicted_class?: string
+    confidence?: number
+    all_predictions?: Array<{
+      class: string
+      confidence: number
+    }>
+    model_used?: string
+    status?: string
+    note?: string
+  }
+}
 
 export function ConsultationForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -18,6 +35,8 @@ export function ConsultationForm() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [message, setMessage] = useState("")
   const [transcription, setTranscription] = useState("")
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const transcriptionIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -32,15 +51,54 @@ export function ConsultationForm() {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getFileType = (file: File): string => {
+    if (file.type.startsWith("image/")) return "image"
+    if (file.type.startsWith("video/")) return "video"
+    if (file.type.startsWith("audio/")) return "audio"
+    return "unknown"
+  }
+
+  const analyzeFile = async (file: File): Promise<AnalysisResult> => {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("file_type", getFileType(file))
+    formData.append("message", message)
+
+    const response = await fetch("http://localhost:8000/analyze", {
+      method: "POST",
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || "Error en el análisis")
+    }
+
+    return response.json()
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulación de envío
-    setTimeout(() => {
-      setIsLoading(false)
+    setError(null)
+    setAnalysisResults([])
+
+    try {
+      const results: AnalysisResult[] = []
+
+      for (const file of uploadedFiles) {
+        const result = await analyzeFile(file)
+        results.push(result)
+      }
+
+      setAnalysisResults(results)
       setMessage("")
       setUploadedFiles([])
-    }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const simulateTranscription = () => {
@@ -70,8 +128,8 @@ export function ConsultationForm() {
   const toggleRecording = () => {
     if (!isRecording) {
       setIsRecording(true)
-      setTranscription("") // Limpiar transcripción anterior
-      simulateTranscription() // Iniciar simulación de transcripción
+      setTranscription("")
+      simulateTranscription()
     } else {
       setIsRecording(false)
       if (transcriptionIntervalRef.current) {
@@ -83,6 +141,16 @@ export function ConsultationForm() {
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click()
+  }
+
+  const formatConfidence = (confidence: number): string => {
+    return `${(confidence * 100).toFixed(1)}%`
+  }
+
+  const getConfidenceColor = (confidence: number): string => {
+    if (confidence > 0.8) return "text-green-500"
+    if (confidence > 0.6) return "text-yellow-500"
+    return "text-red-500"
   }
 
   useEffect(() => {
@@ -103,14 +171,14 @@ export function ConsultationForm() {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl">
+        <div className="mx-auto mt-12 max-w-3xl space-y-6">
           <Card className="bg-card/50 backdrop-blur-sm border-turquoise/20">
             <CardHeader>
               <CardTitle>Nueva Consulta</CardTitle>
               <CardDescription>Escribe tu pregunta o sube archivos multimedia para analizar</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="text" className="w-full">
+              <Tabs defaultValue="media" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="media">Multimedia</TabsTrigger>
                   <TabsTrigger value="audio">Audio</TabsTrigger>
@@ -216,10 +284,6 @@ export function ConsultationForm() {
                         )}
                       </div>
 
-                      <div className="text-center text-sm text-muted-foreground">
-                        <p>La transcripción aparecerá en tiempo real mientras hablas</p>
-                      </div>
-
                       {isRecording && (
                         <div className="mt-4">
                           <div className="p-4 bg-dark/50 border border-turquoise/20 rounded-lg">
@@ -266,6 +330,75 @@ export function ConsultationForm() {
               </p>
             </CardFooter>
           </Card>
+
+          {/* Mostrar errores */}
+          {error && (
+            <Card className="border-red-500/50 bg-red-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <p className="text-red-500 font-medium">Error en el análisis</p>
+                </div>
+                <p className="text-red-400 mt-2">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Mostrar resultados */}
+          {analysisResults.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">Resultados del Análisis</h3>
+              {analysisResults.map((result, index) => (
+                <Card key={index} className="bg-card/50 backdrop-blur-sm border-green-500/20">
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <CardTitle className="text-lg">{result.filename}</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Tipo: {result.file_type} | Modelo: {result.analysis.model_used || "N/A"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {result.file_type === "image" && result.analysis.predicted_class && (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                          <h4 className="font-semibold text-green-400 mb-2">Diagnóstico Principal</h4>
+                          <p className="text-lg font-medium">{result.analysis.predicted_class}</p>
+                          <p className={`text-sm ${getConfidenceColor(result.analysis.confidence || 0)}`}>
+                            Confianza: {formatConfidence(result.analysis.confidence || 0)}
+                          </p>
+                        </div>
+
+                        {result.analysis.all_predictions && (
+                          <div>
+                            <h4 className="font-semibold mb-2">Otras posibilidades:</h4>
+                            <div className="space-y-2">
+                              {result.analysis.all_predictions.slice(1).map((pred, i) => (
+                                <div key={i} className="flex justify-between items-center p-2 bg-dark/50 rounded">
+                                  <span>{pred.class}</span>
+                                  <span className={`text-sm ${getConfidenceColor(pred.confidence)}`}>
+                                    {formatConfidence(pred.confidence)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(result.file_type === "video" || result.file_type === "audio") && (
+                      <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                        <p className="text-yellow-400">{result.analysis.status}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{result.analysis.note}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
