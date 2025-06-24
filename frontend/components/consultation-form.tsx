@@ -167,15 +167,17 @@ export function ConsultationForm() {
         <div className="mx-auto max-w-3xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Consulta con IA</h2>
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
-            Sube archivos multimedia, realiza consultas y obtén respuestas inteligentes en tiempo real.
+            Sube archivos multimedia como imagenes, videos y audio para obtener análisis detallados y respuestas
+            precisas. Nuestra IA está diseñada para ayudarte a comprender mejor tus datos y obtener información valiosa
+            de ellos.
           </p>
         </div>
 
         <div className="mx-auto mt-12 max-w-3xl space-y-6">
           <Card className="bg-card/50 backdrop-blur-sm border-turquoise/20">
             <CardHeader>
-              <CardTitle>Nueva Consulta</CardTitle>
-              <CardDescription>Escribe tu pregunta o sube archivos multimedia para analizar</CardDescription>
+              <CardTitle>Nuevo Análisis</CardTitle>
+              <CardDescription>Sube archivos multimedia para analizar</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="media" className="w-full">
@@ -229,13 +231,6 @@ export function ConsultationForm() {
                         </div>
                       )}
 
-                      <Textarea
-                        placeholder="Describe tu consulta (opcional)..."
-                        className="min-h-[80px] bg-dark border-turquoise/20 focus-visible:ring-turquoise"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                      />
-
                       <Button
                         type="submit"
                         className="w-full bg-turquoise hover:bg-turquoise/90"
@@ -283,7 +278,6 @@ export function ConsultationForm() {
                           </div>
                         )}
                       </div>
-
                       {isRecording && (
                         <div className="mt-4">
                           <div className="p-4 bg-dark/50 border border-turquoise/20 rounded-lg">
@@ -324,11 +318,6 @@ export function ConsultationForm() {
                 </TabsContent>
               </Tabs>
             </CardContent>
-            <CardFooter className="flex flex-col items-start border-t border-border/40 pt-4">
-              <p className="text-xs text-muted-foreground">
-                Tus consultas y archivos se procesan de forma segura. No almacenamos tus datos más tiempo del necesario.
-              </p>
-            </CardFooter>
           </Card>
 
           {/* Mostrar errores */}
