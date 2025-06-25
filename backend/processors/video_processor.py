@@ -7,7 +7,7 @@ import cv2
 from fastapi.responses import JSONResponse
 import os
 
-model = load_model("models/model_epoch_80.keras")
+model = load_model("models/best_model (92%).h5")
 classes = ['acne','benign-mole','bruises','dermatitis','freckles','melanoma','stretch marks','wart']
 
 def preprocess_frame(frame):

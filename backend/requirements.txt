@@ -4,3 +4,4 @@ tensorflow
 pillow
 python-multipart
 opencv-python
+pydub

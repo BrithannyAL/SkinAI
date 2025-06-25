@@ -26,6 +26,7 @@ interface AnalysisResult {
     model_used?: string
     status?: string
     note?: string
+    transcription?: string 
   }
 }
 
@@ -39,6 +40,8 @@ export function ConsultationForm() {
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const transcriptionIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -126,18 +129,35 @@ export function ConsultationForm() {
   }
 
   const toggleRecording = () => {
-    if (!isRecording) {
-      setIsRecording(true)
-      setTranscription("")
-      simulateTranscription()
-    } else {
-      setIsRecording(false)
-      if (transcriptionIntervalRef.current) {
-        clearInterval(transcriptionIntervalRef.current)
-        transcriptionIntervalRef.current = null
+  if (!isRecording) {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
       }
-    }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+        const audioFile = new File([audioBlob], "recording.wav", { type: "audio/webm" })
+
+        console.log("Audio file created:", audioFile, "el tipo es: ", audioFile.type)
+
+        setUploadedFiles([audioFile]) // Solo un archivo para esta pestaña
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    })
+  } else {
+    mediaRecorderRef.current?.stop()
+    setIsRecording(false)
   }
+}
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click()
@@ -283,23 +303,32 @@ export function ConsultationForm() {
                           <div className="p-4 bg-dark/50 border border-turquoise/20 rounded-lg">
                             <div className="flex items-center mb-2">
                               <div className="w-2 h-2 rounded-full bg-turquoise animate-pulse mr-2"></div>
-                              <h4 className="text-sm font-medium text-turquoise">Transcripción en tiempo real</h4>
                             </div>
                             <div className="h-32 overflow-y-auto p-2 bg-dark/80 rounded border border-turquoise/10 text-sm">
                               {transcription ? (
                                 <p className="whitespace-pre-wrap">{transcription}</p>
                               ) : (
-                                <p className="text-muted-foreground italic">Esperando audio...</p>
+                                <p className="text-muted-foreground italic">Procesando audio...</p>
                               )}
                             </div>
                           </div>
+                        </div>
+                      )}
+                      {uploadedFiles.length > 0 && uploadedFiles[0].type.startsWith("audio/") && (
+                        <div className="mt-4">
+                          <Label>Reproducción de audio</Label>
+                          <audio
+                            controls
+                            src={URL.createObjectURL(uploadedFiles[0])}
+                            className="w-full mt-2 rounded border border-turquoise/30"
+                          />
                         </div>
                       )}
 
                       <Button
                         type="submit"
                         className="w-full bg-turquoise hover:bg-turquoise/90"
-                        disabled={isLoading || !isRecording}
+                        disabled={isLoading || uploadedFiles.length === 0}
                       >
                         {isLoading ? (
                           <>
@@ -377,12 +406,22 @@ export function ConsultationForm() {
                       </div>
                     )}
 
-                    {(result.file_type === "video" || result.file_type === "audio") && (
+                    {(result.file_type === "video") && (
                       <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
                         <p className="text-yellow-400">{result.analysis.status}</p>
                         <p className="text-sm text-muted-foreground mt-1">{result.analysis.note}</p>
                       </div>
                     )}
+
+                    {result.file_type === "audio" && result.analysis.transcription && (
+                      <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20 mt-2">
+                        <h4 className="font-semibold text-green-400 mb-2">Transcripción del audio</h4>
+                        <p className="text-sm text-white whitespace-pre-wrap">
+                          {result.analysis.transcription}
+                        </p>
+                      </div>
+                    )}
+
                   </CardContent>
                 </Card>
               ))}

@@ -12,7 +12,7 @@ def analyze_image(contents, filename, message):
     print("Procesando imagen:", filename)
 
     # Cargar el modelo de imágenes de EfficientNet
-    model = load_model("models/best_model.h5", compile=False)
+    model = load_model("models/best_model (92%).h5", compile=False)
 
     # Definir las clases del modelo
     classes = ['acne', 'benign-mole', 'bruises', 'dermatitis', 'freckles', 'melanoma', 'stretch marks', 'wart']
