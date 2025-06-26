@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 import os
 
 # Cargar modelo y clases
-model = load_model("models/modelo_224_25.h5")
+model = load_model("models/modelo_224_20.h5")
 classes = ['acne','benign-mole','bruises','dermatitis','freckles','melanoma','stretch marks','wart']
 
 # Preprocesar frame como en Colab

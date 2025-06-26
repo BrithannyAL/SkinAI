@@ -26,7 +26,7 @@ interface AnalysisResult {
     model_used?: string
     status?: string
     note?: string
-    transcription?: string 
+    transcription?: string
   }
 }
 
@@ -129,35 +129,35 @@ export function ConsultationForm() {
   }
 
   const toggleRecording = () => {
-  if (!isRecording) {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
+    if (!isRecording) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream)
+        mediaRecorderRef.current = mediaRecorder
+        audioChunksRef.current = []
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data)
+          }
         }
-      }
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
-        const audioFile = new File([audioBlob], "recording.wav", { type: "audio/wav" })
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+          const audioFile = new File([audioBlob], "recording.wav", { type: "audio/wav" })
 
-        console.log("Audio file created:", audioFile, "el tipo es: ", audioFile.type)
+          console.log("Audio file created:", audioFile, "el tipo es: ", audioFile.type)
 
-        setUploadedFiles([audioFile]) // Solo un archivo para esta pestaña
-      }
+          setUploadedFiles([audioFile]) // Solo un archivo para esta pestaña
+        }
 
-      mediaRecorder.start()
-      setIsRecording(true)
-    })
-  } else {
-    mediaRecorderRef.current?.stop()
-    setIsRecording(false)
+        mediaRecorder.start()
+        setIsRecording(true)
+      })
+    } else {
+      mediaRecorderRef.current?.stop()
+      setIsRecording(false)
+    }
   }
-}
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click()
@@ -230,21 +230,35 @@ export function ConsultationForm() {
                           <Label>Archivos subidos</Label>
                           <div className="grid gap-2">
                             {uploadedFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between bg-dark p-2 rounded-md">
-                                <div className="flex items-center">
+                              <div key={index} className="flex flex-col bg-dark p-2 rounded-md">
+                                <div className="flex items-center mb-2">
                                   {file.type.startsWith("image/") && <ImageIcon className="h-4 w-4 text-orange mr-2" />}
                                   {file.type.startsWith("video/") && <Video className="h-4 w-4 text-orange mr-2" />}
                                   {file.type.startsWith("audio/") && <Mic className="h-4 w-4 text-orange mr-2" />}
                                   <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeFile(index)}
+                                    className="h-6 w-6 ml-auto"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeFile(index)}
-                                  className="h-6 w-6"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                {file.type.startsWith("image/") && (
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name}
+                                    className="max-h-40 rounded border border-turquoise/30 object-contain mb-2"
+                                  />
+                                )}
+                                {file.type.startsWith("video/") && (
+                                  <video
+                                    src={URL.createObjectURL(file)}
+                                    controls
+                                    className="max-h-40 rounded border border-turquoise/30 object-contain mb-2"
+                                  />
+                                )}
                               </div>
                             ))}
                           </div>
