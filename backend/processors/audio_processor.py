@@ -41,7 +41,7 @@ def CTCLoss(y_true, y_pred):
     loss = K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
     return loss
 
-model_path = "models/modelo_224_20.h5"
+model_path = "models/speech_to_text_spanish1_v4.h5"
 model = load_model(
     model_path,
     custom_objects={
