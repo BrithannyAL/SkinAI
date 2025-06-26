@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from tensorflow.keras.models import load_model
-from fastapi.responses import JSONResponse
+from tensorflow.keras.applications.efficientnet import preprocess_input
 from PIL import Image
 import numpy as np
 import io
@@ -8,25 +8,25 @@ import tensorflow as tf
 
 
 def analyze_image(contents, filename, message):
-
     print("Procesando imagen:", filename)
 
-    # Cargar el modelo de imágenes de EfficientNet
-    model = load_model("models/best_model.h5", compile=False)
+    # Cargar el modelo
+    model = load_model("models/best_model.keras")
 
-    # Definir las clases del modelo
+    # Definir las clases
     classes = ['acne', 'benign-mole', 'bruises', 'dermatitis', 'freckles', 'melanoma', 'stretch marks', 'wart']
 
     try:
-        # Preprocesar la imagen
-        image = Image.open(io.BytesIO(contents))
+        # Preprocesamiento: RGB + resize + preprocess_input
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
         image = image.resize((224, 224))
-        image_array = np.array(image) / 255.0
+        image_array = np.array(image)
+        image_array = preprocess_input(image_array)
         input_tensor = np.expand_dims(image_array, axis=0)
 
-
-        # Realizar la predicción
+        # Predicción
         predictions = model.predict(input_tensor)[0]
+        print("Predicciones:", predictions) 
         top_index = int(np.argmax(predictions))
         top_class = classes[top_index]
         confidence = float(predictions[top_index])
