@@ -143,7 +143,7 @@ export function ConsultationForm() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
-        const audioFile = new File([audioBlob], "recording.wav", { type: "audio/webm" })
+        const audioFile = new File([audioBlob], "recording.wav", { type: "audio/wav" })
 
         console.log("Audio file created:", audioFile, "el tipo es: ", audioFile.type)
 

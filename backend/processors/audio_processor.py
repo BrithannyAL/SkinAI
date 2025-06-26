@@ -41,7 +41,7 @@ def CTCLoss(y_true, y_pred):
     loss = K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
     return loss
 
-model_path = "models/speech_to_text_spanish1_v2.h5"
+model_path = "models/speech_to_text_spanish1.h5"
 model = load_model(
     model_path,
     custom_objects={
@@ -92,24 +92,59 @@ def decode_batch_predictions(pred):
         output_text.append(result)
     return output_text
 
+   
+
 def analyze_audio(contents: bytes, filename: str, message: str):
     try:
-        # Detectar la extensión MIME real si el nombre es engañoso
         mime_type, _ = mimetypes.guess_type(filename)
         ext = filename.split(".")[-1].lower()
 
-        # Si el tipo MIME no es WAV o la extensión es distinta, convertimos
-        if mime_type != "audio/x-wav" or ext != "wav":
-            print(f"🔁 Convirtiendo archivo a WAV: {filename} ({mime_type})")
-            contents = convert_to_wav(contents, ext if ext != "wav" else "webm")  # fallback si fue grabado en webm
+        # Detectar si es una grabación web (WebM disfrazado como WAV)
+        is_web_recording = filename == "recording.wav" or ext == "webm" or (mime_type and "webm" in mime_type)
 
+        if is_web_recording:
+            print(f"🔁 Convirtiendo grabación web a WAV: {filename}")
+            try:
+                # Intenta como WebM primero (grabaciones del navegador)
+                contents = convert_to_wav(contents, "webm")
+            except:
+                # Si falla, intenta como WAV crudo
+                contents = convert_to_wav(contents, "wav")
+        elif ext != "wav" or (mime_type and mime_type != "audio/x-wav"):
+            print(f"🔁 Convirtiendo archivo a WAV: {filename} ({mime_type})")
+            contents = convert_to_wav(contents, ext)
+        else:
+            print(f"✅ Archivo WAV nativo detectado, omitiendo conversión: {filename}")
+
+        # Verificación y estandarización del formato WAV
+        try:
+            audio = AudioSegment.from_file(io.BytesIO(contents), format="wav")
+            needs_conversion = False
+            
+            if audio.frame_rate != 22050:
+                print(f"⚠ Ajustando tasa de muestreo de {audio.frame_rate}Hz a 22050Hz")
+                needs_conversion = True
+                
+            if audio.channels != 1:
+                print(f"⚠ Convirtiendo de {audio.channels} canales a mono")
+                needs_conversion = True
+                
+            if needs_conversion:
+                wav_io = io.BytesIO()
+                audio = audio.set_frame_rate(22050).set_channels(1)
+                audio.export(wav_io, format="wav", codec="pcm_s16le")
+                contents = wav_io.getvalue()
+                
+        except Exception as e:
+            print(f"⚠ Error al verificar formato WAV: {str(e)}")
+            raise ValueError(f"El archivo no es un WAV válido: {str(e)}")
+
+        # Procesamiento del audio
         spectrogram = preprocess_audio_wav(contents)
         predictions = model.predict(spectrogram)
         transcription = decode_batch_predictions(predictions)[0]
 
-        print("transcription :", transcription)
-
-        return JSONResponse({
+        return {
             "success": True,
             "file_type": "audio",
             "filename": filename,
@@ -118,13 +153,8 @@ def analyze_audio(contents: bytes, filename: str, message: str):
                 "transcription": transcription,
                 "model_used": "DeepSpeech_2 CTC"
             }
-        })
+        }
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={
-            "success": False,
-            "file_type": "audio",
-            "filename": filename,
-            "message": message,
-            "error": str(e)
-        })
+        print(f"❌ Error durante el análisis de audio: {str(e)}")
+        raise e
